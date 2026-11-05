@@ -1,0 +1,13 @@
+**/bin/
+**/obj/
+.vs/
+**/.vs/
+.DS_Store
+**/.DS_Store
+*.user
+*.suo
+TestResults/
+coverage/
+.env
+**/appsettings.Development.json
+**/AS_CV.pdf
