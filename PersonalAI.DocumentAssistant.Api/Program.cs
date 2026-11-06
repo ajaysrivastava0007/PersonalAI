@@ -11,6 +11,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<IPdfTextExtractor, PdfTextExtractor>();
+builder.Services.AddScoped<ITextChunker, TextChunker>();
 
 var app = builder.Build();
 

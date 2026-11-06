@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PersonalAI.DocumentAssistant.Api.Models;
+using PersonalAI.DocumentAssistant.Api.Services;
 using PersonalAI.DocumentAssistant.Api.Services.Interfaces;
 
 namespace PersonalAI.DocumentAssistant.Api.Controllers;
@@ -10,13 +11,16 @@ public class DocumentsController : ControllerBase
 {
     private readonly IWebHostEnvironment _environment;
     private readonly IPdfTextExtractor _pdfTextExtractor;
+    private readonly ITextChunker _textChunker;
 
     public DocumentsController(
         IWebHostEnvironment environment,
-        IPdfTextExtractor pdfTextExtractor)
+        IPdfTextExtractor pdfTextExtractor,
+        ITextChunker textChunker)
     {
         _environment = environment;
         _pdfTextExtractor = pdfTextExtractor;
+        _textChunker = textChunker;
     }
 
     [HttpPost("upload")]
@@ -76,6 +80,33 @@ public class DocumentsController : ControllerBase
             FileName = fileName,
             PageCount = pages.Count,
             Pages = pages
+        });
+    }
+
+    [HttpGet("{fileName}/chunks")]
+    public IActionResult GetChunks(string fileName)
+    {
+        if (Path.GetFileName(fileName) != fileName ||
+            !fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+            return BadRequest("Invalid PDF file name.");
+
+        var filePath = Path.Combine(
+            _environment.ContentRootPath,
+            "Documents",
+            fileName);
+
+        if (!System.IO.File.Exists(filePath))
+            return NotFound("PDF document not found.");
+
+        var pages = _pdfTextExtractor.ExtractText(filePath);
+
+        var chunks = _textChunker.CreateChunks(pages);
+
+        return Ok(new
+        {
+            FileName = fileName,
+            TotalChunks = chunks.Count,
+            Chunks = chunks
         });
     }
 }
